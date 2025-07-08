@@ -17,8 +17,8 @@ sealed class Screen(
 ) {
     object Home : Screen("home", "Home", Icons.Filled.Home, Icons.Outlined.Home)
     object Feed : Screen("feed", "Feed", Icons.Filled.Feed, Icons.Outlined.Feed)
-    object Publish : Screen("publish", "Publish", Icons.Filled.AddCircle, Icons.Outlined.AddCircle)
-    object Profile : Screen("profile", "Profile", Icons.Filled.AccountCircle, Icons.Outlined.AccountCircle)
+    object Publish : Screen("publish", "Publicar", Icons.Filled.AddCircle, Icons.Outlined.AddCircle)
+    object Profile : Screen("profile", "Perfil", Icons.Filled.AccountCircle, Icons.Outlined.AccountCircle)
 }
 
 val bottomNavigationItems = listOf(
