@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -61,8 +62,36 @@ fun MainScreen(mainNavController: NavHostController = rememberNavController()) {
         ) {
             composable(Screen.Home.route) { HomeScreen() }
             composable(Screen.Feed.route) { FeedScreen() }
-            composable(Screen.Publish.route) { PublishScreen() }
+            composable(Screen.Publish.route) {
+                PublishScreen(
+                    onPublishClick = { title, description, category, documentContent, fileUri -> // <--- AÑADE fileUri AQUÍ
+                        // Lógica para manejar la publicación:
+                        // 1. Llamar a un ViewModel para guardar/enviar los datos Y EL ARCHIVO.
+                        // 2. Mostrar un mensaje de éxito (Snackbar).
+                        // 3. Limpiar los campos o navegar a otra pantalla.
+                        println("Publicando: Título - $title, Descripción - $description, Categoría - $category")
+                        println("Contenido del Documento:\n$documentContent")
+                        println("URI del Archivo Adjunto: $fileUri") // Ahora puedes usar fileUri
+
+                        // Ejemplo: Navegar de vuelta a Home después de publicar
+                        // mainNavController.navigate(Screen.Home.route) {
+                        //     popUpTo(Screen.Publish.route) { inclusive = true }
+                        // }
+                    },
+                onNavigateBack = {
+                    println("Preview: Navegar hacia atrás")
+                }
+            )
+            }
             composable(Screen.Profile.route) { ProfileScreen() }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MainScreenPreview() {
+
+    MainScreen()
+
 }

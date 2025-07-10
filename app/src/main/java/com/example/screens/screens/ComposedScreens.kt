@@ -26,20 +26,10 @@ fun FeedScreen() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Feed Screen")
+        Text("Saves Screen")
     }
 }
 
-@Composable
-fun PublishScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Publish Screen")
-    }
-}
 
 @Composable
 fun ProfileScreen() {

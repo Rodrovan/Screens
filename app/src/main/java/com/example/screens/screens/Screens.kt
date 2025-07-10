@@ -22,8 +22,8 @@ sealed class Screen(
 }
 
 val bottomNavigationItems = listOf(
-    Screen.Feed, // Primero a la izquierda
+    Screen.Publish, // Primero a la izquierda
     Screen.Home, // En el medio (segundo)
-    Screen.Publish, // Tercero
+    Screen.Feed, // Tercero
     Screen.Profile // Último a la derecha
 )

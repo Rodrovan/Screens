@@ -41,7 +41,7 @@ fun LoginScreen(onLoginClick: (String, String) -> Unit) {
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
-            label = { Text("Usuario") }, // Puedes usar stringResource aquí
+            label = { Text("Usuario/Correo") }, // Puedes usar stringResource aquí
             modifier = Modifier.Companion
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
