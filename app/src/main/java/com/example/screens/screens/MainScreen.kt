@@ -64,7 +64,7 @@ fun MainScreen(mainNavController: NavHostController = rememberNavController()) {
             composable(Screen.Feed.route) { FeedScreen() }
             composable(Screen.Publish.route) {
                 PublishScreen(
-                    onPublishClick = { title, description, category, documentContent, fileUri -> // <--- AÑADE fileUri AQUÍ
+                    onPublishClick = { title, description, category, documentContent, fileUri ->
                         // Lógica para manejar la publicación:
                         // 1. Llamar a un ViewModel para guardar/enviar los datos Y EL ARCHIVO.
                         // 2. Mostrar un mensaje de éxito (Snackbar).
