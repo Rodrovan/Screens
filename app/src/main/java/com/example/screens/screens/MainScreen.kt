@@ -57,31 +57,52 @@ fun MainScreen(mainNavController: NavHostController = rememberNavController()) {
     ) { innerPadding ->
         NavHost(
             navController = mainNavController,
-            startDestination = Screen.Home.route, // Inicia en Home
+            startDestination = Screen.Publish.route, // Inicia en Home
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Home.route) { HomeScreen() }
             composable(Screen.Feed.route) { FeedScreen() }
             composable(Screen.Publish.route) {
                 PublishScreen(
-                    onPublishClick = { title, description, category, documentContent, fileUri ->
+                    onPublishClick = { title, description, category, documentContent, fileUri, facultad ->
                         // Lógica para manejar la publicación:
-                        // 1. Llamar a un ViewModel para guardar/enviar los datos Y EL ARCHIVO.
-                        // 2. Mostrar un mensaje de éxito (Snackbar).
-                        // 3. Limpiar los campos o navegar a otra pantalla.
-                        println("Publicando: Título - $title, Descripción - $description, Categoría - $category")
-                        println("Contenido del Documento:\n$documentContent")
-                        println("URI del Archivo Adjunto: $fileUri") // Ahora puedes usar fileUri
+                        // 1. Esta lambda ahora recibe 'facultad' además de los otros datos.
+                        // 2. Idealmente, llamar a un ViewModel aquí. El ViewModel debería:
+                        //    a. Recibir todos estos datos (title, description, category, documentContent, fileUri, facultad).
+                        //    b. Encargarse de la lógica de negocio (validaciones adicionales si son necesarias).
+                        //    c. Preparar y enviar los datos Y EL ARCHIVO al backend.
+                        //    d. Manejar la respuesta del backend.
+                        // 3. Después de una interacción exitosa con el ViewModel (y por ende, el backend):
+                        //    a. Mostrar un mensaje de éxito (Snackbar/Toast), usualmente disparado desde el ViewModel a través de un StateFlow/LiveData.
+                        //    b. Limpiar los campos del formulario si es necesario (el ViewModel puede exponer un evento para esto).
+                        //    c. Navegar a otra pantalla (ej. de vuelta a Home o a la pantalla de Feed).
+                        //       mainNavController.navigate(Screen.Home.route) { // O la ruta que corresponda
+                        //           popUpTo(Screen.Publish.route) { inclusive = true } // Sale de PublishScreen del backstack
+                        //       }
 
-                        // Ejemplo: Navegar de vuelta a Home después de publicar
-                        // mainNavController.navigate(Screen.Home.route) {
-                        //     popUpTo(Screen.Publish.route) { inclusive = true }
-                        // }
+                        // Ejemplo de lo que se recibe para depuración:
+                        println("Publicando desde MainScreen: Título - $title, Facultad - ${facultad?.displayName}")
+                        println("Descripción: $description, Categoría: $category")
+                        println("Contenido del Documento (si lo hay):\n$documentContent")
+                        println("URI del Archivo Adjunto (si lo hay): $fileUri")
+
                     },
-                onNavigateBack = {
-                    println("Preview: Navegar hacia atrás")
-                }
-            )
+                    onNavigateBack = {
+                        // Navega hacia atrás en la pila de navegación.
+                        // Si PublishScreen es el destino actual en la parte superior de la pila,
+                        // popBackStack() lo quitará y mostrará la pantalla anterior.
+                        if (mainNavController.previousBackStackEntry != null) {
+                            mainNavController.popBackStack()
+                        } else {
+                            // Opcional: si no hay un backstack previo (ej. PublishScreen fue el primer destino)
+                            // podrías navegar a un destino por defecto como la pantalla de inicio.
+                            // mainNavController.navigate(Screen.Home.route) { // O la ruta que corresponda
+                            //    popUpTo(mainNavController.graph.findStartDestination().id) { inclusive = true }
+                            // }
+                            println("Info: No hay pantalla anterior en el backstack para retroceder desde PublishScreen.")
+                        }
+                    }
+                )
             }
             composable(Screen.Profile.route) { ProfileScreen() }
         }

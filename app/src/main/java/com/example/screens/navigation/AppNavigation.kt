@@ -40,22 +40,19 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
         startDestination = AppDestinations.LOGIN_ROUTE // 1. Inicia aquí
     ) {
         composable(AppDestinations.LOGIN_ROUTE) {
+            // Ya no pasas onLoginClick directamente con username y password.
+            // LoginScreen ahora usa su propio ViewModel para manejar la lógica de login.
+            // Solo necesitas proporcionar la acción a realizar CUANDO el login es exitoso.
             LoginScreen(
-                onLoginClick = { username, password ->
-                    // AQUÍ VA TU LÓGICA DE AUTENTICACIÓN
-                    // Por ejemplo, verificar usuario y contraseña
-                    val loginExitoso = true // Simulación: reemplazar con lógica real
-
-                    if (loginExitoso) {
-                        // 2. Navega a MainScreen y elimina Login de la pila
-                        navController.navigate(AppDestinations.MAIN_ROUTE) {
-                            popUpTo(AppDestinations.LOGIN_ROUTE) {
-                                inclusive = true // Esto elimina LoginScreen de la pila de retroceso
-                            }
-                            launchSingleTop = true // Evita múltiples instancias de MainScreen
+                // loginViewModel = viewModel(), // El ViewModel se obtiene por defecto así si no se pasa
+                onLoginSuccess = {
+                    // Navega a MainScreen y elimina Login de la pila
+                    // Esta lógica ahora se ejecuta cuando el LoginViewModel indica un éxito.
+                    navController.navigate(AppDestinations.MAIN_ROUTE) {
+                        popUpTo(AppDestinations.LOGIN_ROUTE) {
+                            inclusive = true // Esto elimina LoginScreen de la pila de retroceso
                         }
-                    } else {
-                        // Manejar login fallido (mostrar mensaje de error, etc.)
+                        launchSingleTop = true // Evita múltiples instancias de MainScreen
                     }
                 }
             )

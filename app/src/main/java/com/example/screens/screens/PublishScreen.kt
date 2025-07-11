@@ -10,36 +10,46 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.* // Importante para by, mutableStateOf, etc.
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.screens.state.rememberPublishScreenState // Asegúrate que esta clase tiene los nuevos estados
+import com.example.screens.model.Facultad // Importa tu enum de Facultad
+import com.example.screens.state.rememberPublishScreenState
 import kotlin.text.isNotBlank
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PublishScreen(
-    // Actualiza la lambda para incluir la URI del archivo
-    onPublishClick: (title: String, description: String, category: String, documentContent: String, fileUri: Uri?) -> Unit,
+    // Actualiza la lambda para incluir la URI del archivo y la facultad
+    onPublishClick: (
+        title: String,
+        description: String,
+        category: String,
+        documentContent: String,
+        fileUri: Uri?,
+        facultad: Facultad? // Añadido
+    ) -> Unit,
     onNavigateBack: (() -> Unit)? = null
 ) {
     val state = rememberPublishScreenState()
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
-    // ActivityResultLauncher para seleccionar un archivo
+    // Estado para el dropdown de facultad
+    var expandedFacultadDropdown by remember { mutableStateOf(false) }
+    val facultadesList = remember { Facultad.values().toList() }
+
     val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent() // Puedes usar OpenDocument() para más control
+        contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
             state.attachedFileUri = it
-            // Intenta obtener el nombre del archivo (puede requerir permisos o ser más complejo)
-            // Esta es una forma simple, puede no funcionar para todos los URIs/proveedores
             val cursor = context.contentResolver.query(it, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
             cursor?.use { c ->
                 if (c.moveToFirst()) {
@@ -49,7 +59,7 @@ fun PublishScreen(
                     }
                 }
             }
-            if (state.attachedFileName == null) { // Fallback si no se pudo obtener el nombre
+            if (state.attachedFileName == null) {
                 state.attachedFileName = it.lastPathSegment ?: "Archivo adjunto"
             }
         }
@@ -71,16 +81,22 @@ fun PublishScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
-                    if (state.title.isNotBlank() && (state.documentContent.isNotBlank() || state.attachedFileUri != null) && state.category.isNotBlank()) {
+                    // Considera añadir validación para state.selectedFacultad si es requerido
+                    if (state.title.isNotBlank() &&
+                        (state.documentContent.isNotBlank() || state.attachedFileUri != null) &&
+                        state.category.isNotBlank() /* && state.selectedFacultad != null (si es obligatorio) */) {
                         onPublishClick(
                             state.title,
                             state.description,
                             state.category,
                             state.documentContent,
-                            state.attachedFileUri
+                            state.attachedFileUri,
+                            state.selectedFacultad // Pasar la facultad seleccionada
                         )
                     } else {
-                        // Manejar campos requeridos (o al menos uno entre contenido de texto o archivo)
+                        // Manejar campos requeridos
+                        // Podrías mostrar un Snackbar o un Toast aquí
+                        println("Error: Faltan campos requeridos o la facultad no está seleccionada.")
                     }
                 },
                 icon = { Icon(Icons.Filled.NewLabel, "Publicar") },
@@ -108,21 +124,52 @@ fun PublishScreen(
                 keyboardOptions = KeyboardOptions.Default.copy(KeyboardCapitalization.Sentences)
             )
 
-            // Contenido de texto (sigue siendo importante)
+            // Selector de Facultad
+            ExposedDropdownMenuBox(
+                expanded = expandedFacultadDropdown,
+                onExpandedChange = { expandedFacultadDropdown = !expandedFacultadDropdown },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = state.selectedFacultad?.displayName ?: "Selecciona una Facultad",
+                    onValueChange = { /* No editable directamente */ },
+                    label = { Text("Facultad (Opcional)") }, // Hazlo opcional o no según tus reglas
+                    readOnly = true,
+                    leadingIcon = { Icon(Icons.Filled.School, null) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedFacultadDropdown) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = expandedFacultadDropdown,
+                    onDismissRequest = { expandedFacultadDropdown = false }
+                ) {
+                    facultadesList.forEach { facultad ->
+                        DropdownMenuItem(
+                            text = { Text(facultad.displayName) },
+                            onClick = {
+                                state.selectedFacultad = facultad
+                                expandedFacultadDropdown = false
+                            }
+                        )
+                    }
+                }
+            }
+
+
             OutlinedTextField(
                 value = state.documentContent,
                 onValueChange = { state.documentContent = it },
                 label = { Text("Contenido Escrito (Opcional si adjuntas archivo)") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .defaultMinSize(minHeight = 150.dp), // Reducido un poco si el foco es el adjunto
+                    .defaultMinSize(minHeight = 150.dp),
                 leadingIcon = { Icon(Icons.Filled.Article, null) },
                 keyboardOptions = KeyboardOptions.Default.copy(KeyboardCapitalization.Sentences),
                 maxLines = 15
             )
 
-            // Sección para Adjuntar Archivo
-            Spacer(modifier = Modifier.height(8.dp))
             Text("Adjuntar Archivo (Opcional)", style = MaterialTheme.typography.titleSmall)
 
             if (state.attachedFileName != null) {
@@ -149,8 +196,7 @@ fun PublishScreen(
 
             Button(
                 onClick = {
-                    filePickerLauncher.launch("*/*") // Lanza el selector de archivos, "*/*" para cualquier tipo
-                    // Puedes ser más específico: "image/*", "application/pdf", etc.
+                    filePickerLauncher.launch("*/*")
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -159,7 +205,6 @@ fun PublishScreen(
                 Text(if (state.attachedFileUri == null) "Seleccionar Archivo" else "Cambiar Archivo")
             }
             Spacer(modifier = Modifier.height(8.dp))
-
 
             OutlinedTextField(
                 value = state.description,
@@ -185,13 +230,13 @@ fun PublishScreen(
 
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
+@Preview(showBackground = true, heightDp = 900) // Aumenté el height para ver más
 @Composable
-fun PublishScreenWithAttachmentPreview() {
+fun PublishScreenWithAttachmentAndFacultadPreview() {
     MaterialTheme {
         PublishScreen(
-            onPublishClick = { title, description, category, documentContent, fileUri ->
-                println("Preview Publicar: Título - $title, Desc - $description, Cat - $category")
+            onPublishClick = { title, description, category, documentContent, fileUri, facultad ->
+                println("Preview Publicar: Título - $title, Desc - $description, Cat - $category, Facultad - ${facultad?.displayName}")
                 println("Contenido Doc:\n$documentContent")
                 println("Archivo Adjunto URI: $fileUri")
             },
